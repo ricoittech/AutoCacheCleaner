@@ -245,6 +245,8 @@ class MainActivity : ComponentActivity() {
                 onOpenAccessibility = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
                 isPro = isPro,
                 onBuyPro = ::buyPro,
+                onFastClean = ::requestFastClean,
+                onOpenShizuku = ::openShizuku,
                 onShareDiagnostics = ::shareDiagnostics,
                 autoMode = autoMode,
                 onAutoModeChange = ::changeAutoMode,
@@ -375,6 +377,11 @@ class MainActivity : ComponentActivity() {
             val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, report)
             startActivity(Intent.createChooser(send, getString(R.string.diag_button)))
         }
+    }
+
+    private fun openShizuku() {
+        val launch = packageManager.getLaunchIntentForPackage(ShizukuEngine.MANAGER_PACKAGE)
+        if (launch == null) toast(getString(R.string.toast_shizuku_missing)) else startActivity(launch)
     }
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()

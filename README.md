@@ -12,7 +12,7 @@
 - 앱 데이터(로그인·사진·설정)는 지우지 않고 캐시만 지웁니다
 - 정리 전 앱별 캐시 크기, 정리 후 확보한 용량을 보여줍니다
 - 선택한 앱 목록은 저장되어 다음에도 원탭, 정기 자동 정리, 빠른 설정 타일, 위젯 지원
-- 선택: [Shizuku](https://shizuku.rikka.app/)를 쓰면 시스템 앱 캐시까지 몇 초 만에 정리 (고속 모드)
+- 선택: [Shizuku](https://shizuku.rikka.app/)를 쓰면 시스템 앱 캐시까지 몇 초 만에 정리 (고속 모드). Shizuku가 실행 중이면 홈 화면에 **[고속 정리 바로 실행]** 버튼이 나타납니다
 
 ### 지원 현황
 | 기기 | 상태 |
@@ -73,7 +73,7 @@ Clear the cache of **all apps at once**, or only the ones you pick. It taps the 
 - Only cache is cleared; logins, photos and settings stay
 - Shows each app's cache size before and the space freed after
 - Remembers your selection, scheduled auto-clean, Quick Settings tile, widget
-- Optional: with [Shizuku](https://shizuku.rikka.app/), system-app caches are cleared in seconds (fast mode)
+- Optional: with [Shizuku](https://shizuku.rikka.app/), system-app caches are cleared in seconds (fast mode); a **Fast clean now** button appears on the home screen while Shizuku is running
 
 ### Compatibility
 | Device | Status |

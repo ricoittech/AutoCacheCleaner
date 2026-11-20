@@ -91,6 +91,8 @@ fun HomeScreen(
     onRequestShizuku: () -> Unit,
     isPro: Boolean,
     onBuyPro: () -> Unit,
+    onFastClean: () -> Unit,
+    onOpenShizuku: () -> Unit,
     onShareDiagnostics: () -> Unit,
     autoMode: AutoMode,
     onAutoModeChange: (AutoMode) -> Unit,
@@ -145,6 +147,16 @@ fun HomeScreen(
         OutlinedButton(onClick = onCleanSelected, enabled = ready, modifier = Modifier.fillMaxWidth().height(64.dp)) {
             Text(stringResource(R.string.clean_selected), fontSize = 18.sp)
         }
+        // Manual fast mode: runs right away, independent of the switch and of the scheduled clean
+        when (shizukuState) {
+            ShizukuEngine.State.READY -> OutlinedButton(onClick = onFastClean, modifier = Modifier.fillMaxWidth().height(64.dp)) {
+                Text(stringResource(R.string.fast_clean_now), fontSize = 18.sp)
+            }
+            ShizukuEngine.State.NOT_RUNNING -> TextButton(onClick = onOpenShizuku, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.fast_not_running))
+            }
+            ShizukuEngine.State.NO_PERMISSION -> Unit // the permission button above already covers this
+        }
         TextButton(onClick = onShareDiagnostics, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.diag_button))
         }
@@ -156,7 +168,7 @@ fun HomeScreen(
 private fun AutoCleanRow(isPro: Boolean, mode: AutoMode, onChange: (AutoMode) -> Unit, onBuyPro: () -> Unit) {
     Column {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.auto_title), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text(stringResource(if (BuildConfig.OPEN_BUILD) R.string.auto_title_open else R.string.auto_title), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             listOf(
                 AutoMode.OFF to R.string.auto_off,
                 AutoMode.DAILY to R.string.auto_daily,

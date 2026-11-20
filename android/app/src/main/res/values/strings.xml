@@ -32,6 +32,7 @@
 
     <!-- Auto clean (Pro) -->
     <string name="auto_title">Auto clean (Pro)</string>
+    <string name="auto_title_open">Auto clean</string>
     <string name="auto_off">Off</string>
     <string name="auto_daily">Daily</string>
     <string name="auto_weekly">Weekly</string>
@@ -93,4 +94,7 @@
     <string name="widget_label">Clear cache</string>
     <string name="widget_desc">One tap to clear all app cache</string>
     <string name="diag_button">Copy support info (for bug reports)</string>
+    <string name="fast_clean_now">Fast clean now (Shizuku)</string>
+    <string name="fast_not_running">Fast mode needs Shizuku to be running — open Shizuku</string>
+    <string name="toast_shizuku_missing">Shizuku is not installed</string>
 </resources>

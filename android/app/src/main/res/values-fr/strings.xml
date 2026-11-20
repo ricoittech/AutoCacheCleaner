@@ -29,6 +29,7 @@
     <string name="clean_selected">Vider le cache sélectionné</string>
 
     <string name="auto_title">Nettoyage auto (Pro)</string>
+    <string name="auto_title_open">Nettoyage auto</string>
     <string name="auto_off">Désactivé</string>
     <string name="auto_daily">Quotidien</string>
     <string name="auto_weekly">Hebdo</string>

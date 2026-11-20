@@ -29,6 +29,7 @@
     <string name="clean_selected">Borrar caché seleccionada</string>
 
     <string name="auto_title">Limpieza automática (Pro)</string>
+    <string name="auto_title_open">Limpieza automática</string>
     <string name="auto_off">No</string>
     <string name="auto_daily">Diaria</string>
     <string name="auto_weekly">Semanal</string>

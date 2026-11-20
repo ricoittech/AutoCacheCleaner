@@ -14,6 +14,7 @@ import rikka.shizuku.Shizuku
  */
 object ShizukuEngine {
     const val REQUEST_CODE = 1001
+    const val MANAGER_PACKAGE = "moe.shizuku.privileged.api"
     private const val TAG = "CacheWipe"
 
     enum class State { NOT_RUNNING, NO_PERMISSION, READY }

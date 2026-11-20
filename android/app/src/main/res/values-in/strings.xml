@@ -29,6 +29,7 @@
     <string name="clean_selected">Hapus cache terpilih</string>
 
     <string name="auto_title">Bersih otomatis (Pro)</string>
+    <string name="auto_title_open">Bersih otomatis</string>
     <string name="auto_off">Mati</string>
     <string name="auto_daily">Harian</string>
     <string name="auto_weekly">Mingguan</string>

@@ -29,6 +29,7 @@
     <string name="clean_selected">清除所选缓存</string>
 
     <string name="auto_title">自动清理（Pro）</string>
+    <string name="auto_title_open">自动清理</string>
     <string name="auto_off">关闭</string>
     <string name="auto_daily">每天</string>
     <string name="auto_weekly">每周</string>

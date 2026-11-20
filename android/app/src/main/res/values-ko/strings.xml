@@ -29,6 +29,7 @@
     <string name="clean_selected">선택 캐시 삭제</string>
 
     <string name="auto_title">자동 정리 (Pro)</string>
+    <string name="auto_title_open">자동 정리</string>
     <string name="auto_off">끄기</string>
     <string name="auto_daily">매일</string>
     <string name="auto_weekly">매주</string>
@@ -85,4 +86,7 @@
     <string name="widget_label">캐시 정리</string>
     <string name="widget_desc">한 번 눌러 전체 앱 캐시 정리</string>
     <string name="diag_button">문제 신고용 진단 정보 보내기</string>
+    <string name="fast_clean_now">고속 정리 바로 실행 (Shizuku)</string>
+    <string name="fast_not_running">고속 모드는 Shizuku 실행이 필요해요 — Shizuku 열기</string>
+    <string name="toast_shizuku_missing">Shizuku가 설치되어 있지 않아요</string>
 </resources>

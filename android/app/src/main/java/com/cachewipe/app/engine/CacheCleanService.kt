@@ -1,6 +1,7 @@
 package com.cachewipe.app.engine
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.GestureDescription
 import android.app.ActivityOptions
 import android.app.KeyguardManager
@@ -53,6 +54,8 @@ class CacheCleanService : AccessibilityService() {
     /** Bumped on every Settings window change, so we never act on the previous app's screen. */
     @Volatile
     private var windowChanges = 0
+    private var notImportantViews = false
+    private var diagnosticsLogged = false
 
     override fun onServiceConnected() {
         instance = this
@@ -79,6 +82,7 @@ class CacheCleanService : AccessibilityService() {
     fun start(apps: List<AppInfo>) {
         if (job?.isActive == true || apps.isEmpty()) return
         CleanJob.stopRequested = false
+        diagnosticsLogged = false
         CleanJob.update { JobState(running = true, total = apps.size) }
         showOverlay()
         job = scope.launch {
@@ -142,7 +146,13 @@ class CacheCleanService : AccessibilityService() {
     ): ItemStatus {
         val shown = rootInActiveWindow?.let { findOnScreenButton(it, labels) }?.let { Rect().also(it::getBoundsInScreen) }
         Log.d(TAG, "$packageName asking user to tap: $reason, button=$shown")
-        if (shown == null) {
+        if (shown == null && !diagnosticsLogged) {
+            diagnosticsLogged = true // the tree is the same for every app: log it once per job
+            val labelsToTry = SettingsLabels(this).clearCache
+            windows.forEach { w ->
+                val hits = labelsToTry.sumOf { w.root?.findAccessibilityNodeInfosByText(it)?.size ?: 0 }
+                Log.d(TAG, "$packageName findByText window type=${w.type} root=${w.root?.packageName} hits=$hits")
+            }
             dumpTree("$packageName[active]", rootInActiveWindow)
             // Diagnostic: is the button in another window?
             windows.forEachIndexed { i, w ->
@@ -181,8 +191,21 @@ class CacheCleanService : AccessibilityService() {
 
         // The storage page slides in from the side: wait until the button is fully on screen,
         // then give Settings time to compute the cache size and set the button state
-        waitForNode(scroll = false) { findOnScreenButton(it, labels) }
-            ?: return askUserToTap(packageName, labels, before, repo, "clear cache button not found")
+        var found = waitForNode(scroll = false, timeoutMs = BUTTON_FIRST_WAIT_MS) { findOnScreenButton(it, labels) }
+        if (found == null) {
+            // Not there yet, or this Settings version draws the bar without readable buttons: also look at views
+            // that are hidden from accessibility, so an empty floating bar can be recognised
+            includeNotImportantViews(true)
+            found = waitForNode(scroll = false, timeoutMs = STEP_TIMEOUT_MS - BUTTON_FIRST_WAIT_MS) {
+                findOnScreenButton(it, labels) ?: findEmptyBar(it)
+            }
+        }
+        if (found == null) return askUserToTap(packageName, labels, before, repo, "clear cache button not found")
+        if (found.viewIdResourceName == BOTTOM_BAR_ID) {
+            // One UI 9.5 beta draws the bar without buttons in the accessibility tree and ignores touches injected by
+            // accessibility services there (a real finger works), so the only option is to ask the user to tap
+            return askUserToTap(packageName, labels, before, repo, "bottom bar not exposed to accessibility")
+        }
         // Wait at least SIZE_LOAD_MIN_MS, then only while the button is still disabled (worst case = SIZE_LOAD_MS)
         delay(SIZE_LOAD_MIN_MS)
         var button = rootInActiveWindow?.let { findOnScreenButton(it, labels) }
@@ -211,6 +234,30 @@ class CacheCleanService : AccessibilityService() {
         return if (disabled) ItemStatus.CLEARED else askUserToTap(packageName, labels, before, repo, "button still enabled after tap")
     }
 
+    /** Fallback path only: tree reads also include views Settings marks "not important for accessibility". */
+    private fun includeNotImportantViews(enabled: Boolean) {
+        if (notImportantViews == enabled) return
+        val info = serviceInfo ?: return
+        info.flags = if (enabled) info.flags or AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+        else info.flags and AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS.inv()
+        serviceInfo = info
+        notImportantViews = enabled
+    }
+
+    /** The floating bottom bar when Settings draws it without any readable buttons inside (One UI 9.5 beta). */
+    private fun findEmptyBar(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val bar = root.findAccessibilityNodeInfosByViewId(BOTTOM_BAR_ID).firstOrNull() ?: return null
+        val bounds = Rect().also(bar::getBoundsInScreen)
+        if (!bar.isVisibleToUser || bounds.width() <= 0 || bounds.left < 0 || bounds.right > resources.displayMetrics.widthPixels) return null
+        val queue = ArrayDeque<AccessibilityNodeInfo>().apply { add(bar) }
+        while (queue.isNotEmpty()) {
+            val node = queue.removeFirst()
+            if (!node.text.isNullOrBlank() || !node.contentDescription.isNullOrBlank()) return null
+            for (i in 0 until node.childCount) node.getChild(i)?.let(queue::add)
+        }
+        return bar
+    }
+
     /**
      * Diagnostics for screens the engine does not recognise (read with `adb logcat -s CacheWipe`).
      * Only runs on the fallback path; logs Settings UI structure only, never user content beyond labels.
@@ -229,9 +276,13 @@ class CacheCleanService : AccessibilityService() {
                 TAG,
                 "  ".repeat(depth) + "${node.className?.toString()?.substringAfterLast('.')} " +
                     "text=${node.text} desc=${node.contentDescription} id=${node.viewIdResourceName} " +
-                    "click=${node.isClickable} en=${node.isEnabled} vis=${node.isVisibleToUser} $b",
+                    "click=${node.isClickable} en=${node.isEnabled} vis=${node.isVisibleToUser} imp=${node.isImportantForAccessibility} " +
+                    "children=${node.childCount} $b",
             )
-            for (i in 0 until node.childCount) node.getChild(i)?.let { walk(it, depth + 1) }
+            for (i in 0 until node.childCount) {
+                val child = node.getChild(i)
+                if (child == null) Log.d(TAG, "  ".repeat(depth + 1) + "child#$i = null (parent ${node.className})") else walk(child, depth + 1)
+            }
         }
         walk(root, 0)
     }
@@ -254,7 +305,11 @@ class CacheCleanService : AccessibilityService() {
 
     private suspend fun tap(node: AccessibilityNodeInfo): Boolean {
         val bounds = Rect().also(node::getBoundsInScreen)
-        val path = Path().apply { moveTo(bounds.exactCenterX(), bounds.exactCenterY()) }
+        return tapAt(bounds.exactCenterX(), bounds.exactCenterY())
+    }
+
+    private suspend fun tapAt(x: Float, y: Float): Boolean {
+        val path = Path().apply { moveTo(x, y) }
         val gesture = GestureDescription.Builder()
             .addStroke(GestureDescription.StrokeDescription(path, 0, TAP_MS))
             .build()
@@ -275,11 +330,12 @@ class CacheCleanService : AccessibilityService() {
     /** Polls the active Settings window until [find] returns a node, scrolling the list when asked. */
     private suspend fun waitForNode(
         scroll: Boolean,
+        timeoutMs: Long = STEP_TIMEOUT_MS,
         find: (AccessibilityNodeInfo) -> AccessibilityNodeInfo?,
     ): AccessibilityNodeInfo? {
         var waited = 0L
         var polls = 0
-        while (waited < STEP_TIMEOUT_MS && !CleanJob.stopRequested) {
+        while (waited < timeoutMs && !CleanJob.stopRequested) {
             val root = rootInActiveWindow
             if (root != null && root.packageName == SettingsLabels.SETTINGS_PKG) {
                 find(root)?.let { return it }
@@ -332,6 +388,7 @@ class CacheCleanService : AccessibilityService() {
     }
 
     private fun finishJob() {
+        includeNotImportantViews(false)
         Log.i(TAG, "done stopped=${CleanJob.stopRequested} ${summarize(CleanJob.state.value.results)}")
         if (CleanJob.state.value.results.isNotEmpty()) AdPolicy(PrefsAdStore(this)).onCleanFinished()
         removeOverlay()
@@ -409,5 +466,7 @@ class CacheCleanService : AccessibilityService() {
         private const val OVERLAY_HIDE_MS = 150L
         private const val MANUAL_TIMEOUT_MS = 10_000L
         private const val TAP_MS = 50L
+        private const val BOTTOM_BAR_ID = "com.android.settings:id/floating_bottom_container"
+        private const val BUTTON_FIRST_WAIT_MS = 2_000L
     }
 }

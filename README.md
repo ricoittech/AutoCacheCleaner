@@ -18,6 +18,7 @@
 | 기기 | 상태 |
 |---|---|
 | 삼성 갤럭시 (One UI) | ✅ 갤럭시 S26 울트라(One UI 9)에서 160개 앱 전체 정리 160/160 성공 확인. 다른 기종은 제보를 기다립니다 |
+| 삼성 One UI 9.5 베타 | ⚠️ 반자동. 설정 앱이 하단 [캐시 삭제] 바를 접근성에 노출하지 않고 앱이 주입한 터치도 무시해서, 앱마다 [캐시 삭제]를 **직접 눌러야** 합니다(앱이 화면을 열어 주고 누른 것을 확인해 다음 앱으로 넘어감). Shizuku 고속 모드는 정상 동작 |
 | 순정 안드로이드 (Pixel 등) | ❌ 아직 동작하지 않습니다 (Android 17 에뮬레이터에서 [캐시 삭제] 버튼을 찾지 못함) |
 | 기타 제조사 | ❓ 미확인 — 시도해 보시고 [이슈](../../issues)로 알려 주세요 |
 
@@ -77,6 +78,7 @@ Clear the cache of **all apps at once**, or only the ones you pick. It taps the 
 ### Compatibility
 | Device | Status |
 |---|---|
+| Samsung One UI 9.5 beta | ⚠️ Semi-manual: Settings hides the bottom [Clear cache] bar from accessibility and ignores touches injected by accessibility services, so you tap [Clear cache] yourself for each app (the app opens each page and moves on once it sees the cache drop). Shizuku fast mode works |
 | Samsung Galaxy (One UI) | ✅ Verified on a Galaxy S26 Ultra (One UI 9): 160/160 apps cleared. Other models: reports welcome |
 | Stock Android (Pixel etc.) | ❌ Not working yet (the [Clear cache] button is not exposed to accessibility on the Android 17 emulator) |
 | Other vendors | ❓ Unknown — please try and open an [issue](../../issues) |
